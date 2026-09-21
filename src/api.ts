@@ -53,6 +53,11 @@ export interface ScheduleItem {
   endTime: string;
   day: string;
   type: string;
+  // Self-Service does not promise a room on every schedule row, so these are
+  // read if present and ignored when they are not.
+  building?: string | null;
+  room?: string | null;
+  location?: string | null;
 }
 
 export interface Term {

@@ -13,6 +13,33 @@
     "Productivity",
     "Web"
   ],
+  "preferences": [
+    {
+      "name": "engineUrl",
+      "title": "cedarengine URL",
+      "description": "Where cedarengine is listening. Leave blank to disable the schedule fallback entirely.",
+      "type": "textfield",
+      "required": false,
+      "default": "http://127.0.0.1:3000",
+      "placeholder": "http://127.0.0.1:3000"
+    },
+    {
+      "name": "engineToken",
+      "title": "cedarengine Token",
+      "description": "The BEARER_TOKEN from cedarengine's .env. Every route but /health requires it.",
+      "type": "password",
+      "required": false
+    },
+    {
+      "name": "myPersonId",
+      "title": "Your Directory Id",
+      "description": "Your own id, for My Day, Course Fit and Textbooks. Find it in Search Cedarville Directory: open yourself and use Copy ID.",
+      "type": "textfield",
+      "required": false,
+      "default": "",
+      "placeholder": "2722401"
+    }
+  ],
   "commands": [
     {
       "name": "search-directory",
@@ -30,6 +57,77 @@
           "default": false
         }
       ]
+    },
+    {
+      "name": "quiet-rooms",
+      "title": "Find a Quiet Room",
+      "description": "Empty classrooms right now, ranked by how quiet the building around them is",
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "homeBuilding",
+          "title": "Start From",
+          "description": "Building to measure walking distance from. A partial name is fine -- \"McChesney\" matches \"McChesney Hall\". Leave blank to rank by quiet alone.",
+          "type": "textfield",
+          "required": false,
+          "default": "",
+          "placeholder": "McChesney"
+        }
+      ]
+    },
+    {
+      "name": "registration",
+      "title": "Sections Filling up",
+      "description": "Which sections are gaining students fastest, from recorded seat counts",
+      "mode": "view"
+    },
+    {
+      "name": "class-roster",
+      "title": "Who's in a Class",
+      "description": "Search a section and see the students in it, rebuilt from booklists",
+      "mode": "view"
+    },
+    {
+      "name": "campus-now",
+      "title": "Campus Right Now",
+      "description": "Where everyone is scheduled to be, building by building",
+      "mode": "view"
+    },
+    {
+      "name": "my-day",
+      "title": "My Day",
+      "description": "Where you need to be next, and somewhere quiet to sit until then",
+      "mode": "view"
+    },
+    {
+      "name": "course-fit",
+      "title": "Would This Class Fit",
+      "description": "Which sections of a course fit your week, walking time included",
+      "mode": "view"
+    },
+    {
+      "name": "free-together",
+      "title": "Free Together",
+      "description": "When a group of people are all free at once",
+      "mode": "view"
+    },
+    {
+      "name": "textbooks",
+      "title": "My Textbooks",
+      "description": "Your books with their ISBNs, and who else needs each one",
+      "mode": "view"
+    },
+    {
+      "name": "faculty",
+      "title": "Professors",
+      "description": "What a professor teaches this term, where and when",
+      "mode": "view"
+    },
+    {
+      "name": "dorms",
+      "title": "Who Lives Where",
+      "description": "Halls room by room, from the directory's own dorm fields",
+      "mode": "view"
     }
   ],
   "dependencies": {

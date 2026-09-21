@@ -10,7 +10,6 @@ import {
   showToast,
   Toast,
 } from "@raycast/api";
-import { readFile } from "fs/promises";
 import { useEffect, useRef, useState } from "react";
 import {
   AuthRequiredError,
@@ -36,7 +35,18 @@ import {
   storeCookie,
 } from "./auth";
 import { getCacheSize, mergePeopleIntoCache, searchCache } from "./cache";
-import { getCachedPhotoPath } from "./images";
+import { Classmates } from "./classmates";
+import { Dossier } from "./dossier";
+import { RideHome } from "./ride-home";
+import { getCachedPhotoPath, lastPhotoFailure } from "./images";
+import {
+  type EngineResult,
+  type Transit,
+  engineConfigured,
+  engineSchedule,
+  transitBetween,
+} from "./engine";
+import { describeGap, placeOf, statusNow } from "./now";
 
 type AuthState =
   | { kind: "loading" }
@@ -227,38 +237,136 @@ function PersonDetail({
   const name = demo ? demoName(person) : displayName(person, true);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [info, setInfo] = useState<PersonInfo | null>(null);
+  const [infoError, setInfoError] = useState<
+    "no-terms" | "no-info" | "threw" | null
+  >(null);
+  const [termTried, setTermTried] = useState<string | null>(null);
+  const [fallback, setFallback] = useState<EngineResult | null>(null);
+  const [transit, setTransit] = useState<Transit | null>(null);
+  // "12 min left" is a lie thirty seconds after it is drawn, so the view
+  // re-reads the clock while it is open.
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    if (!photoPath) return;
-    readFile(photoPath)
-      .then((buf) =>
-        setPhotoDataUrl(`data:image/jpeg;base64,${buf.toString("base64")}`),
-      )
-      .catch(() => {});
+    const timer = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!photoPath) {
+      setPhotoDataUrl(null);
+      return;
+    }
+    // Raycast's Detail markdown will not render a `data:` URI -- the image
+    // silently comes out blank, which is why this looked like a broken
+    // download for so long while the very same file rendered fine as the
+    // list row's icon. A file:// URL is what it does accept. The support
+    // path contains "Application Support", so every segment is encoded;
+    // an unescaped space breaks the URL just as quietly.
+    const encoded = photoPath.split("/").map(encodeURIComponent).join("/");
+    setPhotoDataUrl(`file://${encoded}`);
   }, [photoPath]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const terms = await getPersonTerms(person.Id, cookie);
-      if (!terms.length) return;
-      const now = Date.now();
-      const current =
-        terms.find((t) => {
-          const start = t.start ? new Date(t.start).getTime() : 0;
-          const end = t.end ? new Date(t.end).getTime() : Infinity;
-          return now >= start && now <= end;
-        }) ?? terms[0];
-      const result = await getPersonInfo(person.Id, current.code, cookie);
-      if (result) {
+      // Every failure below used to return silently, which left `isLoading`
+      // true forever: the pane spun, no schedule ever arrived, and nothing
+      // said why. An expired Self-Service session looks exactly like that.
+      try {
+        const terms = await getPersonTerms(person.Id, cookie);
+        if (cancelled) return;
+        console.log(
+          `[schedule] ${person.Id}: ${terms.length} terms ->`,
+          JSON.stringify(terms.map((t) => ({ code: t.code, start: t.start }))),
+        );
+        if (!terms.length) {
+          setInfoError("no-terms");
+          return;
+        }
+        const now = Date.now();
+        const current =
+          terms.find((t) => {
+            const start = t.start ? new Date(t.start).getTime() : 0;
+            const end = t.end ? new Date(t.end).getTime() : Infinity;
+            return now >= start && now <= end;
+          }) ?? terms[0];
+        setTermTried(current.code);
+        const result = await getPersonInfo(person.Id, current.code, cookie);
+        if (cancelled) return;
+        console.log(
+          `[schedule] ${person.Id} term ${current.code}: student=${result?.student?.isStudent}` +
+            ` items=${result?.student?.scheduleItems?.length ?? "n/a"}` +
+            ` faculty=${result?.faculty?.isFaculty}` +
+            ` facultyItems=${result?.faculty?.scheduleItems?.length ?? "n/a"}`,
+        );
+        if (!result) {
+          setInfoError("no-info");
+          return;
+        }
         setInfo(result);
         // Write confirmed isFaculty back to cache
         const confirmed = result.faculty.isFaculty;
         if (person.isFaculty !== confirmed) {
           await mergePeopleIntoCache([{ ...person, isFaculty: confirmed }]);
         }
+      } catch (error) {
+        if (cancelled) return;
+        // Without this the promise rejected into nowhere and the pane sat on
+        // a spinner forever, which is indistinguishable from "still loading".
+        console.error(`[schedule] ${person.Id} threw:`, error);
+        setInfoError("threw");
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [person.Id, cookie]);
+
+  // Only asked once Self-Service has actually come back empty, so the engine
+  // is never hit for the common case where the real schedule is available.
+  const selfServiceEmpty =
+    (info !== null || infoError !== null) &&
+    !(info?.faculty?.scheduleItems?.length || info?.student?.scheduleItems?.length);
+
+  useEffect(() => {
+    if (!selfServiceEmpty || demo) return;
+    let cancelled = false;
+    engineSchedule(person.Id).then((result) => {
+      if (!cancelled) setFallback(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selfServiceEmpty, person.Id, demo]);
+
+  // Between two classes in different buildings: ask the campus router where
+  // that walk goes, and how far along it they should be by now. Re-runs on
+  // the same 30s tick as the clock, so the position keeps up.
+  const walkItems = fallback?.items.length
+    ? fallback.items
+    : (info?.faculty?.scheduleItems?.length
+        ? info.faculty.scheduleItems
+        : (info?.student?.scheduleItems ?? []));
+
+  useEffect(() => {
+    if (demo || !walkItems.length) return;
+    const status = statusNow(walkItems);
+    const from = status.previous?.building ?? null;
+    const to = status.next?.building ?? null;
+    if (status.state !== "free" || !from || !to || status.minutesSincePrevious === null) {
+      setTransit(null);
+      return;
+    }
+    let cancelled = false;
+    transitBetween(from, to, status.minutesSincePrevious).then((result) => {
+      if (!cancelled) setTransit(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walkItems, demo, tick]);
 
   // Photo full-width at top, name + italic tags below
   const md: string[] = [];
@@ -288,22 +396,136 @@ function PersonDetail({
   if (person.Title?.trim()) tags.push(person.Title.trim());
   if (tags.length) md.push(`*${tags.join(" · ")}*`);
 
-  const scheduleItems = info?.faculty?.isFaculty
+  const selfServiceItems = info?.faculty?.isFaculty
     ? info.faculty.scheduleItems
     : info?.student?.isStudent
       ? info.student.scheduleItems
       : [];
+  // Self-Service first -- it is the registrar's own answer. cedarengine only
+  // stands in when that comes back empty, which for anyone but yourself is
+  // most of the time.
+  const usingFallback = !selfServiceItems.length && !!fallback;
+  const scheduleItems = usingFallback ? fallback.items : selfServiceItems;
   const termDesc = info?.faculty?.isFaculty
     ? info.faculty.term?.description
     : info?.student?.term?.description;
-
   const nonScheduled = info?.student?.isStudent
     ? (info.student.nonScheduledCourses ?? [])
     : [];
 
+  // A missing photo used to be indistinguishable from a person who has none.
+  if (!demo && person.PhotoUrl && !photoDataUrl) {
+    const why = lastPhotoFailure();
+    if (why === "auth") {
+      md.push(
+        "*Photo unavailable — Self-Service answered the photo request with a sign-in page. " +
+          "The session needs refreshing: sign out and back in (⌘K → Sign Out).*",
+      );
+    } else if (why) {
+      md.push("*Photo unavailable — the image could not be downloaded.*");
+    }
+  }
+
+  if (infoError) {
+    md.push(
+      infoError === "no-terms"
+        ? "*Schedule unavailable — Self-Service returned no terms for this person. " +
+            "If this happens for everyone, the session has probably expired: sign out and back in.*"
+        : infoError === "threw"
+          ? "*Schedule unavailable — the request failed outright. Sign out and back in; " +
+            "if it persists the session cookie is likely stale.*"
+          : "*Schedule unavailable — Self-Service did not return course data. " +
+            "This is usually an expired session; sign out and back in.*",
+    );
+  } else if (info && !scheduleItems.length && !nonScheduled.length) {
+    // Loaded fine, just nothing in it. Previously this rendered nothing at
+    // all, which looks identical to the feature being broken.
+    md.push(
+      `*No schedule returned${termTried ? ` for term ${termTried}` : ""} — ` +
+        "Self-Service only shares course rows for yourself and your advisees.*" +
+        (engineConfigured()
+          ? "\n\n*cedarengine has no harvested booklist for them either, so there is " +
+            "nothing to fall back on.*"
+          : "\n\n*Set the cedarengine URL and token in this command's preferences " +
+            "to fall back on booklist-derived schedules.*"),
+    );
+  }
+
+  // Right under the name, before the schedule that explains it.
+  if (!demo && scheduleItems.length) {
+    const status = statusNow(scheduleItems);
+    if (status.state === "in-class" && status.current) {
+      const place = placeOf(status.current);
+      const until = formatTime(status.current.endTime);
+      md.push(
+        `**In class now** — ${status.current.title}${place ? ` · ${place}` : ""}\n\n` +
+          `until ${until}${
+            status.minutesAway !== null
+              ? ` (${describeGap(status.minutesAway)} left)`
+              : ""
+          }`,
+      );
+    } else if (status.state === "free" && transit?.enRoute) {
+      // Mid-walk: say where along it, not just that they are free.
+      const where = transit.near
+        ? transit.near.metres < 40
+          ? ` — by ${transit.near.label}`
+          : ` — about ${transit.near.metres}m from ${transit.near.label}`
+        : "";
+      md.push(
+        `**Walking** — ${transit.from} → ${transit.to}${where}\n\n` +
+          `${Math.round(transit.progress * 100)}% of a ${Math.round(transit.walkMinutes)} min ` +
+          `(${transit.metres}m) walk · arrives in ~${transit.minutesOut} min` +
+          (status.next ? ` for ${status.next.title}` : "") +
+          "\n\n*Dead reckoning: assumes they left when class let out and walked straight there.*",
+      );
+    } else if (status.state === "free") {
+      const settled =
+        transit && !transit.enRoute
+          ? `**Probably at ${transit.to}** — the walk from ${transit.from} takes about ` +
+            `${Math.round(transit.walkMinutes)} min and they left ${describeGap(
+              status.minutesSincePrevious ?? 0,
+            )} ago`
+          : null;
+      md.push(
+        settled
+          ? settled +
+              (status.next
+                ? `, so waiting on ${status.next.title} at ${formatTime(status.next.startTime)}`
+                : "")
+          : status.next
+            ? `**Free now** — next is ${status.next.title} at ${formatTime(
+                status.next.startTime,
+              )}${
+                status.minutesAway !== null
+                  ? `, in ${describeGap(status.minutesAway)}`
+                  : ""
+              }`
+            : "**Free now** — nothing else scheduled today",
+      );
+    }
+  }
   if (scheduleItems.length || nonScheduled.length) {
-    md.push(`## Schedule${termDesc ? ` — ${termDesc}` : ""}\n`);
+    md.push(
+      `## Schedule${
+        usingFallback
+          ? ` — ${fallback.term} *(from cedarengine booklists)*`
+          : termDesc
+            ? ` — ${termDesc}`
+            : ""
+      }\n`,
+    );
     if (scheduleItems.length) md.push(buildScheduleText(scheduleItems, demo));
+    if (usingFallback) {
+      const when = fallback.harvestedAt
+        ? new Date(fallback.harvestedAt).toLocaleDateString()
+        : null;
+      md.push(
+        "*Inferred from campus-store booklists, not the registrar: a section nobody " +
+          "assigned a book to will be missing, and a course dropped since the last " +
+          `harvest${when ? ` (${when})` : ""} may still be listed.*`,
+      );
+    }
     if (nonScheduled.length) {
       md.push("**Online / Unscheduled**");
       md.push(
@@ -319,7 +541,7 @@ function PersonDetail({
 
   return (
     <Detail
-      isLoading={!info}
+      isLoading={!info && !infoError}
       markdown={md.join("\n\n")}
       navigationTitle={name}
       metadata={
@@ -543,6 +765,43 @@ function PersonDetail({
               content={demo ? "ext. ****" : formatPhone(person.OfficePhone)}
             />
           )}
+          {!demo && (
+            <Action.Push
+              title="Assassins Dossier"
+              icon={Icon.BullsEye}
+              shortcut={{ modifiers: ["cmd"], key: "a" }}
+              target={
+                <Dossier
+                  person={person}
+                  name={displayName(person)}
+                  items={scheduleItems}
+                />
+              }
+            />
+          )}
+          {!demo && (
+            <Action.Push
+              title="Who Lives Near Them"
+              icon={Icon.Car}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+              target={
+                <RideHome personId={person.Id} personName={displayName(person)} />
+              }
+            />
+          )}
+          {!demo && (
+            <Action.Push
+              title="Who Shares Their Classes"
+              icon={Icon.TwoPeople}
+              shortcut={{ modifiers: ["cmd"], key: "t" }}
+              target={
+                <Classmates
+                  personId={person.Id}
+                  personName={displayName(person)}
+                />
+              }
+            />
+          )}
           <Action.CopyToClipboard
             title="Copy ID"
             content={demo ? "000000000" : person.Id}
@@ -697,6 +956,39 @@ function PersonListItem({
             <Action.CopyToClipboard
               title="Copy Phone"
               content={demo ? "ext. ****" : formatPhone(person.OfficePhone)}
+            />
+          )}
+          {!demo && (
+            <Action.Push
+              title="Assassins Dossier"
+              icon={Icon.BullsEye}
+              shortcut={{ modifiers: ["cmd"], key: "a" }}
+              target={
+                <Dossier person={person} name={displayName(person)} />
+              }
+            />
+          )}
+          {!demo && (
+            <Action.Push
+              title="Who Lives Near Them"
+              icon={Icon.Car}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+              target={
+                <RideHome personId={person.Id} personName={displayName(person)} />
+              }
+            />
+          )}
+          {!demo && (
+            <Action.Push
+              title="Who Shares Their Classes"
+              icon={Icon.TwoPeople}
+              shortcut={{ modifiers: ["cmd"], key: "t" }}
+              target={
+                <Classmates
+                  personId={person.Id}
+                  personName={displayName(person)}
+                />
+              }
             />
           )}
           <Action.CopyToClipboard
@@ -893,9 +1185,16 @@ export default function SearchDirectory() {
   useEffect(() => {
     if (authState.kind !== "ready") return;
     const { cookie } = authState;
+    const missingUrl = results.filter((p) => !p.PhotoUrl).length;
+    if (missingUrl) {
+      console.log(
+        `[photo] ${missingUrl}/${results.length} results have no PhotoUrl — those can never load a photo`,
+      );
+    }
     for (const person of results) {
       if (!person.PhotoUrl || photoPaths[person.Id]) continue;
       getCachedPhotoPath(person.Id, person.PhotoUrl, cookie).then((p) => {
+        if (!p) console.log(`[photo] ${person.Id}: fetch/cache returned null`);
         if (p) setPhotoPaths((prev) => ({ ...prev, [person.Id]: p }));
       });
     }
