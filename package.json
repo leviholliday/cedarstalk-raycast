@@ -134,6 +134,12 @@
       "title": "Campus Facts",
       "description": "Hometowns, majors, early classes and the most-assigned books, read-only",
       "mode": "view"
+    },
+    {
+      "name": "weather",
+      "title": "Weather",
+      "description": "Cedarville forecast with clothing advice, tuned for running cold",
+      "mode": "view"
     }
   ],
   "dependencies": {

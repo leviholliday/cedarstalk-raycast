@@ -9,6 +9,7 @@ import {
 } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { type Availability, type DirectoryHit, freeTogether, searchPeople } from "./engine";
+import { personIcon, usePersonPhotos } from "./photos";
 
 /**
  * When a group of people are all free at once.
@@ -133,6 +134,8 @@ export default function Command() {
     }
   };
 
+  const photos = usePersonPhotos([...found.map((p) => p.id), ...picked.map((p) => p.id)]);
+
   const unknownNames = (result?.unknown ?? []).map(
     (id) => picked.find((p) => p.id === id)?.name ?? `#${id}`,
   );
@@ -168,7 +171,7 @@ export default function Command() {
             return (
               <List.Item
                 key={person.id}
-                icon={already ? Icon.CheckCircle : Icon.Circle}
+                icon={already ? Icon.CheckCircle : personIcon(person.id, photos)}
                 title={name}
                 subtitle={person.dormName ?? person.department ?? ""}
                 accessories={
@@ -202,7 +205,7 @@ export default function Command() {
               icon={
                 result?.unknown.includes(person.id)
                   ? { source: Icon.QuestionMark, tintColor: Color.Orange }
-                  : Icon.Person
+                  : personIcon(person.id, photos)
               }
               title={person.name}
               subtitle={

@@ -9,6 +9,7 @@ import {
 } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { DossierById } from "./dossier";
+import { personIcon, usePersonPhotos } from "./photos";
 import { type Book, type BookHolders, type StudentBooks, bookHolders, booksOf } from "./engine";
 
 /**
@@ -57,6 +58,7 @@ function Holders({ isbn, title }: { isbn: string; title: string | null }) {
   }, [isbn]);
 
   const students = holders?.students ?? [];
+  const photos = usePersonPhotos(students.map((s) => s.id));
 
   return (
     <List
@@ -78,7 +80,7 @@ function Holders({ isbn, title }: { isbn: string; title: string | null }) {
           {students.map((student) => (
             <List.Item
               key={student.id}
-              icon={Icon.Person}
+              icon={personIcon(student.id, photos)}
               title={student.name ?? `#${student.id}`}
               accessories={
                 student.studentClass

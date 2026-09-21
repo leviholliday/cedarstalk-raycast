@@ -8,6 +8,7 @@ import {
 } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { DossierById } from "./dossier";
+import { personIcon, usePersonPhotos } from "./photos";
 import {
   type Classmate,
   type ClassmateResult,
@@ -108,6 +109,7 @@ export function Classmates({
   }
 
   const found = result?.classmates ?? [];
+  const photos = usePersonPhotos(found.map((m) => m.studentId));
   const harvested = result?.harvested ?? null;
 
   const caveat = harvested
@@ -203,9 +205,11 @@ export function Classmates({
             <List.Item
               key={mate.studentId}
               icon={
-                mate.sharedSections.length >= 3
-                  ? { source: Icon.TwoPeople, tintColor: Color.Green }
-                  : Icon.Person
+                photos[mate.studentId]
+                  ? personIcon(mate.studentId, photos)
+                  : mate.sharedSections.length >= 3
+                    ? { source: Icon.TwoPeople, tintColor: Color.Green }
+                    : Icon.Person
               }
               title={mate.name ?? `#${mate.studentId}`}
               subtitle={mate.sharedSections.map(readableSection).join(" · ")}

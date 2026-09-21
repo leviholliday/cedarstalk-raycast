@@ -1,6 +1,7 @@
 import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { DossierById } from "./dossier";
+import { personIcon, usePersonPhotos } from "./photos";
 import { type DormRoom, type DormRow, dormList, dormRooms } from "./engine";
 
 /**
@@ -20,6 +21,7 @@ function floorOf(room: string): string {
 
 function Rooms({ dorm }: { dorm: DormRow }) {
   const [rooms, setRooms] = useState<DormRoom[]>([]);
+  const photos = usePersonPhotos(rooms.flatMap((r) => r.occupants.map((o) => o.id)));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -70,7 +72,7 @@ function Rooms({ dorm }: { dorm: DormRow }) {
                   return (
                     <List.Item
                       key={`${room.room}-${person.id}`}
-                      icon={Icon.Person}
+                      icon={personIcon(person.id, photos)}
                       title={name}
                       subtitle={`${room.room}${home ? ` · ${home}` : ""}`}
                       keywords={[room.room, person.city ?? "", person.state ?? ""]}

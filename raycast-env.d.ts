@@ -50,6 +50,8 @@ declare namespace Preferences {
   export type Dorms = ExtensionPreferences & {}
   /** Preferences accessible in the `campus-facts` command */
   export type CampusFacts = ExtensionPreferences & {}
+  /** Preferences accessible in the `weather` command */
+  export type Weather = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -77,5 +79,7 @@ declare namespace Arguments {
   export type Dorms = {}
   /** Arguments passed to the `campus-facts` command */
   export type CampusFacts = {}
+  /** Arguments passed to the `weather` command */
+  export type Weather = {}
 }
 

@@ -1,6 +1,7 @@
 import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { DossierById } from "./dossier";
+import { personIcon, usePersonPhotos } from "./photos";
 import { type CarpoolResult, carpoolFor } from "./engine";
 
 /**
@@ -79,6 +80,7 @@ export function RideHome({
   }
 
   const matches = result?.matches ?? [];
+  const photos = usePersonPhotos(matches.map((m) => m.id));
 
   return (
     <List
@@ -103,11 +105,14 @@ export function RideHome({
             return (
               <List.Item
                 key={match.id}
-                icon={{
-                  source: Icon.Car,
-                  tintColor:
-                    match.distanceMiles <= 15 ? Color.Green : Color.SecondaryText,
-                }}
+                icon={
+                  photos[match.id]
+                    ? personIcon(match.id, photos)
+                    : {
+                        source: Icon.Car,
+                        tintColor: match.distanceMiles <= 15 ? Color.Green : Color.SecondaryText,
+                      }
+                }
                 title={match.name ?? `#${match.id}`}
                 subtitle={town}
                 keywords={[match.city ?? "", match.state ?? ""]}

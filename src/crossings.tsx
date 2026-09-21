@@ -7,6 +7,7 @@ import {
   crossingsWith,
   searchPeople,
 } from "./engine";
+import { personIcon, usePersonPhotos } from "./photos";
 
 /**
  * Where two people's walks would put them in the same place at once.
@@ -55,6 +56,7 @@ export function CrossingsWith({
 }) {
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<DirectoryHit[]>([]);
+  const photos = usePersonPhotos(found.map((p) => p.id));
   const [other, setOther] = useState<{ id: string; name: string } | null>(null);
   const [result, setResult] = useState<CrossingsResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -116,7 +118,7 @@ export function CrossingsWith({
               return (
                 <List.Item
                   key={person.id}
-                  icon={Icon.Person}
+                  icon={personIcon(person.id, photos)}
                   title={name}
                   subtitle={person.dormName ?? person.department ?? ""}
                   actions={

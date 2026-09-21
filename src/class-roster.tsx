@@ -8,6 +8,7 @@ import {
 } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { DossierById } from "./dossier";
+import { personIcon, usePersonPhotos } from "./photos";
 import {
   type Roster,
   type RosterStudent,
@@ -105,6 +106,7 @@ function RosterView({ section }: { section: Section }) {
   }, [section.sectionId]);
 
   const students: RosterStudent[] = roster?.students ?? [];
+  const photos = usePersonPhotos(students.map((s) => s.id));
   const tag = roster ? coverageTag(roster, section) : null;
 
   const byClass = new Map<string, RosterStudent[]>();
@@ -122,7 +124,7 @@ function RosterView({ section }: { section: Section }) {
   const row = (student: RosterStudent) => (
     <List.Item
       key={student.id}
-      icon={Icon.Person}
+      icon={personIcon(student.id, photos)}
       title={student.name ?? `#${student.id}`}
       subtitle={student.dormName ?? ""}
       keywords={[student.dormName ?? "", student.studentClass ?? ""]}

@@ -1,6 +1,7 @@
 import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { DossierById } from "./dossier";
+import { personIcon, usePersonPhotos } from "./photos";
 import { type Presence, type PresentSection, presenceIn } from "./engine";
 
 /**
@@ -46,6 +47,7 @@ export function BuildingNow({ building }: { building: string }) {
   }, [building]);
 
   const sections = presence?.sections ?? [];
+  const photos = usePersonPhotos(sections.flatMap((s) => s.students.map((st) => st.id)));
 
   return (
     <List
@@ -75,7 +77,7 @@ export function BuildingNow({ building }: { building: string }) {
                 section.students.map((student) => (
                   <List.Item
                     key={`${section.sectionId}-${student.id}`}
-                    icon={Icon.Person}
+                    icon={personIcon(student.id, photos)}
                     title={student.name ?? `#${student.id}`}
                     subtitle={student.dormName ?? ""}
                     keywords={[section.name ?? "", section.room, student.dormName ?? ""]}
