@@ -1131,3 +1131,40 @@ export function crossingsWith(
     `/v1/people/${encodeURIComponent(personId)}/crossings?with=${encodeURIComponent(otherId)}`,
   );
 }
+
+// ─── Campus facts ───────────────────────────────────────────────────────────
+
+export interface Curiosities {
+  term: string;
+  hometownStates: { state: string; people: number }[];
+  distance: {
+    geocoded: number;
+    ofPeople: number;
+    medianMiles: number;
+    meanMiles: number;
+    furthest: { city: string; state: string; miles: number } | null;
+  };
+  earlyBirds: { subject: string; early: number; meetings: number; share: number }[];
+  classSize: { subject: string; sections: number; meanClassSize: number }[];
+  commonBooks: { isbn: string; title: string | null; students: number }[];
+  optionalShare: { optional: number; required: number; share: number };
+  /** The engine's own caveats about this data -- shown, not summarised away. */
+  notes: string[];
+}
+
+export function curiosities(): Promise<Curiosities | null> {
+  return engineGet<Curiosities>("/v1/stats/curiosities");
+}
+
+export interface MajorSchool {
+  school: string;
+  students: number;
+}
+
+export async function majorDistribution(): Promise<{
+  students: number;
+  confident: number;
+  schools: MajorSchool[];
+} | null> {
+  return engineGet("/v1/majors/distribution");
+}

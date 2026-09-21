@@ -48,6 +48,8 @@ declare namespace Preferences {
   export type Faculty = ExtensionPreferences & {}
   /** Preferences accessible in the `dorms` command */
   export type Dorms = ExtensionPreferences & {}
+  /** Preferences accessible in the `campus-facts` command */
+  export type CampusFacts = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -73,5 +75,7 @@ declare namespace Arguments {
   export type Faculty = {}
   /** Arguments passed to the `dorms` command */
   export type Dorms = {}
+  /** Arguments passed to the `campus-facts` command */
+  export type CampusFacts = {}
 }
 
