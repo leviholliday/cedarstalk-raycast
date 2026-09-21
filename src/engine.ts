@@ -1094,3 +1094,40 @@ export async function searchPeople(query: string): Promise<DirectoryHit[]> {
   );
   return data?.people ?? [];
 }
+
+// ─── Where two people's walks would cross ──────────────────────────────────
+
+export interface CrossingSide {
+  from: string;
+  to: string;
+  windowStart: string;
+  windowEnd: string;
+}
+
+export interface Crossing {
+  day: number;
+  overlapStart: string;
+  overlapEnd: string;
+  overlapMinutes: number;
+  a: CrossingSide;
+  b: CrossingSide;
+  /** A named building whose own anchor sits at the shared node, if any. */
+  near: string | null;
+  sharedNodes: number;
+}
+
+export interface CrossingsResult {
+  term: string;
+  /** False when either person has no timetable to check this against. */
+  known: boolean;
+  crossings: Crossing[];
+}
+
+export function crossingsWith(
+  personId: string,
+  otherId: string,
+): Promise<CrossingsResult | null> {
+  return engineGet<CrossingsResult>(
+    `/v1/people/${encodeURIComponent(personId)}/crossings?with=${encodeURIComponent(otherId)}`,
+  );
+}

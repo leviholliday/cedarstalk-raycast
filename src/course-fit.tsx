@@ -115,6 +115,7 @@ export default function Command() {
       onSearchTextChange={setQuery}
       searchBarPlaceholder="Course code — e.g. CS 1220 or MATH-2740"
       throttle
+      isShowingDetail={Boolean(groups.length)}
     >
       {query.trim().length < 3 ? (
         <List.EmptyView

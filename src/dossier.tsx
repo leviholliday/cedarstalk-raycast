@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import type { DirectoryPerson, ScheduleItem } from "./api";
 import { Classmates } from "./classmates";
+import { CrossingsWith } from "./crossings";
 import {
   type CampusBuilding,
   type LocationNow,
@@ -529,6 +530,12 @@ export function Dossier({
             icon={Icon.TwoPeople}
             shortcut={{ modifiers: ["cmd"], key: "t" }}
             target={<Classmates personId={person.Id} personName={name} />}
+          />
+          <Action.Push
+            title="Crossing Paths With…"
+            icon={Icon.Compass}
+            shortcut={{ modifiers: ["cmd"], key: "x" }}
+            target={<CrossingsWith personId={person.Id} personName={name} />}
           />
           <Action.CopyToClipboard
             title="Copy Dossier"
