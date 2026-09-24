@@ -84,8 +84,8 @@ const SEEDED_KEY = "quiet-rooms:seeded";
 
 /**
  * Buildings to leave out, because being unscheduled is not the same as being
- * open to you. Seeded once with the ones Levi said he cannot get into, then
- * entirely his to change -- nothing here is inferred, so nothing should be
+ * open to you. Seeded once with a few locked buildings, then
+ * entirely yours to change -- nothing here is inferred, so nothing should be
  * silently re-added later.
  */
 const SEED_HIDDEN = ["Health Sciences Center", "Chemistry Lab Center"];

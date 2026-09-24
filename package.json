@@ -17,7 +17,7 @@
     {
       "name": "engineUrl",
       "title": "cedarstalk URL",
-      "description": "Where cedarstalk is listening. Leave blank to disable the schedule fallback entirely.",
+      "description": "Where cedarstalk is running. The launcher uses http://127.0.0.1:3000 unless that port was busy.",
       "type": "textfield",
       "required": false,
       "default": "http://127.0.0.1:3000",
@@ -26,9 +26,9 @@
     {
       "name": "engineToken",
       "title": "cedarstalk Token",
-      "description": "The BEARER_TOKEN from cedarstalk's .env. Every route but /health requires it.",
+      "description": "The token you got at cedarstalk.netlify.app (the same one you pasted into the setup page).",
       "type": "password",
-      "required": false
+      "required": true
     },
     {
       "name": "myPersonId",
@@ -37,7 +37,7 @@
       "type": "textfield",
       "required": false,
       "default": "",
-      "placeholder": "2722401"
+      "placeholder": "1234567"
     }
   ],
   "commands": [

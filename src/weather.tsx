@@ -15,8 +15,7 @@ const LAT = 39.744;
 const LON = -83.809;
 
 const COLD_KEY = "runsCold";
-// Same default as the phone version, for the same reason -- Levi said this
-// about himself directly, so it is a stated fact here, not a guess.
+// Same default as the phone version: a stated preference, not a guess.
 const COLD_OFFSET_F = 8;
 
 const WMO: Record<number, { icon: string; label: string; rain?: boolean; snow?: boolean; storm?: boolean }> = {

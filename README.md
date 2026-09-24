@@ -1,5 +1,14 @@
 # Cedarville People Search Raycast Extension
 
+> Originally built by [Kieran Klukas](https://dunkirk.sh) -- the directory
+> search, sign-in helper and everything it started with are his work. The
+> cedarstalk commands added in this fork were made with
+> [Claude](https://claude.com/claude-code). Same MIT license, Kieran's copyright.
+>
+> **Using cedarstalk?** Double-click `Start cedarstalk.command` from the
+> cedarstalk download and say yes when it offers Raycast -- it installs this for
+> you. Raycast then asks for your token the first time you run a command.
+
 ![detail of a user](./media/cedarstalk-1.png)
 
 Search the Cedarville University student and staff directory from Raycast. Look up anyone by name, view their schedule, majors, office, and contact info -- all without opening a browser.
