@@ -16,8 +16,8 @@
   "preferences": [
     {
       "name": "engineUrl",
-      "title": "cedarengine URL",
-      "description": "Where cedarengine is listening. Leave blank to disable the schedule fallback entirely.",
+      "title": "cedarstalk URL",
+      "description": "Where cedarstalk is listening. Leave blank to disable the schedule fallback entirely.",
       "type": "textfield",
       "required": false,
       "default": "http://127.0.0.1:3000",
@@ -25,8 +25,8 @@
     },
     {
       "name": "engineToken",
-      "title": "cedarengine Token",
-      "description": "The BEARER_TOKEN from cedarengine's .env. Every route but /health requires it.",
+      "title": "cedarstalk Token",
+      "description": "The BEARER_TOKEN from cedarstalk's .env. Every route but /health requires it.",
       "type": "password",
       "required": false
     },

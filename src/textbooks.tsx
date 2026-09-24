@@ -221,7 +221,7 @@ export default function Command() {
           description={
             result
               ? `The store listed ${result.withoutIsbn} digital-access rows, which are not books.`
-              : "cedarengine has no harvested booklist for you this term."
+              : "cedarstalk has no harvested booklist for you this term."
           }
         />
       ) : (

@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 
 /**
  * Cedarville's forecast, with the same clothing advice as the phone version
- * (cedarengine-mobile) -- deliberately the same rules, so "wear a coat"
+ * (cedarstalk-mobile) -- deliberately the same rules, so "wear a coat"
  * means the same thing whichever screen answered it.
  *
- * Calls Open-Meteo directly rather than through cedarengine: it needs no API
+ * Calls Open-Meteo directly rather than through cedarstalk: it needs no API
  * key, no account, and no dependency on the engine being up at all. Weather
  * is the one command in this extension that works even if nothing else does.
  */

@@ -71,7 +71,7 @@ export default function Command() {
       <List isLoading={false}>
         <List.EmptyView
           icon={Icon.Plug}
-          title="cedarengine is not answering"
+          title="cedarstalk is not answering"
           description={
             failure instanceof EngineUnavailable
               ? failure.message

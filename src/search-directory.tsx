@@ -401,7 +401,7 @@ function PersonDetail({
     : info?.student?.isStudent
       ? info.student.scheduleItems
       : [];
-  // Self-Service first -- it is the registrar's own answer. cedarengine only
+  // Self-Service first -- it is the registrar's own answer. cedarstalk only
   // stands in when that comes back empty, which for anyone but yourself is
   // most of the time.
   const usingFallback = !selfServiceItems.length && !!fallback;
@@ -444,9 +444,9 @@ function PersonDetail({
       `*No schedule returned${termTried ? ` for term ${termTried}` : ""} — ` +
         "Self-Service only shares course rows for yourself and your advisees.*" +
         (engineConfigured()
-          ? "\n\n*cedarengine has no harvested booklist for them either, so there is " +
+          ? "\n\n*cedarstalk has no harvested booklist for them either, so there is " +
             "nothing to fall back on.*"
-          : "\n\n*Set the cedarengine URL and token in this command's preferences " +
+          : "\n\n*Set the cedarstalk URL and token in this command's preferences " +
             "to fall back on booklist-derived schedules.*"),
     );
   }
@@ -509,7 +509,7 @@ function PersonDetail({
     md.push(
       `## Schedule${
         usingFallback
-          ? ` — ${fallback.term} *(from cedarengine booklists)*`
+          ? ` — ${fallback.term} *(from cedarstalk booklists)*`
           : termDesc
             ? ` — ${termDesc}`
             : ""

@@ -47,7 +47,7 @@ export default function Command() {
       <List isLoading={false}>
         <List.EmptyView
           icon={Icon.Plug}
-          title="cedarengine has nothing to show"
+          title="cedarstalk has nothing to show"
           description="Check that it is running and the token is set in the extension preferences."
         />
       </List>

@@ -597,7 +597,7 @@ export function DossierById({
       navigationTitle={personName}
       markdown={
         missing
-          ? `# ${personName}\n\ncedarengine has no directory record for id \`${personId}\`.\n\nThat usually means the person left after the roster that named them was harvested.`
+          ? `# ${personName}\n\ncedarstalk has no directory record for id \`${personId}\`.\n\nThat usually means the person left after the roster that named them was harvested.`
           : `# ${personName}\n\nLooking them up…`
       }
     />

@@ -356,8 +356,8 @@ export default function Command() {
           icon={Icon.Plug}
           title={
             failure.kind === "unconfigured"
-              ? "cedarengine is not set up"
-              : "cedarengine is not answering"
+              ? "cedarstalk is not set up"
+              : "cedarstalk is not answering"
           }
           description={
             failure.kind === "unconfigured"

@@ -248,7 +248,7 @@ export default function Command() {
           description={
             term
               ? `Type a course code, a title or an instructor's name to see ${term} sections and who is in them.`
-              : "Waiting for cedarengine…"
+              : "Waiting for cedarstalk…"
           }
           actions={
             <ActionPanel>

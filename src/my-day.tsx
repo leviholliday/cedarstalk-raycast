@@ -181,7 +181,7 @@ export default function Command() {
         <List.EmptyView
           icon={Icon.Calendar}
           title="No timetable for that id"
-          description="cedarengine has no harvested booklist for it this term. Check the id in preferences, or that the engine is running."
+          description="cedarstalk has no harvested booklist for it this term. Check the id in preferences, or that the engine is running."
           actions={
             <ActionPanel>
               <Action

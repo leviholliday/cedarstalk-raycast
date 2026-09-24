@@ -88,7 +88,7 @@ export default function Command() {
       <List isLoading={false}>
         <List.EmptyView
           icon={Icon.Plug}
-          title="cedarengine has nothing to place"
+          title="cedarstalk has nothing to place"
           description="Either it is not running, or no schedules have been harvested yet."
           actions={
             <ActionPanel>

@@ -2,11 +2,11 @@ import { getPreferenceValues } from "@raycast/api";
 import type { DirectoryPerson, ScheduleItem } from "./api";
 
 /**
- * cedarengine, as a fallback for schedules Self-Service will not hand over.
+ * cedarstalk, as a fallback for schedules Self-Service will not hand over.
  *
  * Self-Service only fills in course rows for yourself and your advisees --
  * ask it about a classmate and it answers, quite legitimately, that it has
- * nothing. cedarengine infers a timetable from a different direction
+ * nothing. cedarstalk infers a timetable from a different direction
  * entirely: the campus store's booklists name the *section* a book was
  * bought for, and the catalog says when and where that section meets.
  *
@@ -15,7 +15,7 @@ import type { DirectoryPerson, ScheduleItem } from "./api";
  * nobody assigned a book to is invisible to it no matter who is enrolled.
  */
 
-/** cedarengine counts days the way `Date.getDay` does: Sunday is 0. */
+/** cedarstalk counts days the way `Date.getDay` does: Sunday is 0. */
 const DAY_NAMES = [
   "Sunday",
   "Monday",
@@ -331,7 +331,7 @@ export async function quietRooms(options: {
   const settings = config();
   if (!settings) {
     throw new EngineUnavailable(
-      "cedarengine is not configured yet.",
+      "cedarstalk is not configured yet.",
       "unconfigured",
     );
   }
@@ -348,19 +348,19 @@ export async function quietRooms(options: {
     });
   } catch {
     throw new EngineUnavailable(
-      `Could not reach cedarengine at ${settings.url}.`,
+      `Could not reach cedarstalk at ${settings.url}.`,
       "unreachable",
     );
   }
 
   if (res.status === 401 || res.status === 403) {
     throw new EngineUnavailable(
-      "cedarengine rejected the token.",
+      "cedarstalk rejected the token.",
       "unconfigured",
     );
   }
   if (!res.ok) {
-    throw new EngineUnavailable(`cedarengine answered ${res.status}.`, "http");
+    throw new EngineUnavailable(`cedarstalk answered ${res.status}.`, "http");
   }
 
   const data = (await res.json()) as { rooms?: QuietRoom[] };
@@ -460,7 +460,7 @@ export async function classmates(
   const settings = config();
   if (!settings) {
     throw new EngineUnavailable(
-      "cedarengine is not configured yet.",
+      "cedarstalk is not configured yet.",
       "unconfigured",
     );
   }
@@ -473,13 +473,13 @@ export async function classmates(
     );
   } catch {
     throw new EngineUnavailable(
-      `Could not reach cedarengine at ${settings.url}.`,
+      `Could not reach cedarstalk at ${settings.url}.`,
       "unreachable",
     );
   }
 
   if (res.status === 401 || res.status === 403) {
-    throw new EngineUnavailable("cedarengine rejected the token.", "unconfigured");
+    throw new EngineUnavailable("cedarstalk rejected the token.", "unconfigured");
   }
   // 404 is the directory saying it has never heard of this id, which is a
   // different thing from "no overlap" and reads better as an empty list.
@@ -487,7 +487,7 @@ export async function classmates(
     return { term: "", minShared, classmates: [], harvested: null };
   }
   if (!res.ok) {
-    throw new EngineUnavailable(`cedarengine answered ${res.status}.`, "http");
+    throw new EngineUnavailable(`cedarstalk answered ${res.status}.`, "http");
   }
 
   const data = (await res.json()) as {

@@ -4,7 +4,7 @@ import { LocalStorage } from "@raycast/api";
  * The two things the registrar's timetable cannot tell you about a room:
  * whether you are allowed in it, and whether anyone actually studies there.
  *
- * cedarengine knows when a room has no class in it. That is a genuinely
+ * cedarstalk knows when a room has no class in it. That is a genuinely
  * different question from "can I go and sit in it right now" -- the Health
  * Sciences Center and the chemistry labs are card-locked to their own
  * majors, a classroom that is free at 2pm may still need reserving, and the

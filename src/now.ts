@@ -3,7 +3,7 @@ import type { ScheduleItem } from "./api";
 /**
  * "Where are they right now", from the schedule already on screen.
  *
- * This deliberately does not ask cedarengine. The engine can answer the same
+ * This deliberately does not ask cedarstalk. The engine can answer the same
  * question, but only for students whose booklist has been harvested — and it
  * infers the timetable from which books a shop was told to stock, so a
  * section nobody assigned a book to is invisible to it. Self-Service hands
