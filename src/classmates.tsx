@@ -79,6 +79,8 @@ export function Classmates({
     };
   }, [personId, minShared]);
 
+  const photos = usePersonPhotos((result?.classmates ?? []).map((m) => m.studentId));
+
   if (failure) {
     return (
       <List isLoading={false}>
@@ -109,7 +111,6 @@ export function Classmates({
   }
 
   const found = result?.classmates ?? [];
-  const photos = usePersonPhotos(found.map((m) => m.studentId));
   const harvested = result?.harvested ?? null;
 
   const caveat = harvested

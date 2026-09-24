@@ -63,6 +63,8 @@ export function RideHome({
     </List.Dropdown>
   );
 
+  const photos = usePersonPhotos((result?.matches ?? []).map((m) => m.id));
+
   if (!isLoading && result && !result.geocoded) {
     return (
       <List isLoading={false} navigationTitle={`Rides — ${personName}`}>
@@ -80,7 +82,6 @@ export function RideHome({
   }
 
   const matches = result?.matches ?? [];
-  const photos = usePersonPhotos(matches.map((m) => m.id));
 
   return (
     <List
