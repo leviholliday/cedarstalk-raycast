@@ -120,6 +120,12 @@ export async function clearAuthBrowserSession(): Promise<void> {
 }
 
 async function runBrowser(args: string[]): Promise<void> {
+  // The sign-in window is a small Swift app, so it only exists on macOS.
+  if (process.platform !== "darwin") {
+    throw new Error(
+      "Signing in to the live directory only works on a Mac for now -- every other cedarstalk command works here.",
+    );
+  }
   const binaryPath = await ensureBinary();
   const appBundle = await ensureAppBundle(binaryPath);
 
