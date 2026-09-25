@@ -4,6 +4,7 @@ import { mkdir, readFile, rm, stat, symlink, unlink, writeFile } from "fs/promis
 import * as os from "os";
 import * as path from "path";
 import { promisify } from "util";
+import { runEdgeAuth } from "./edge-auth";
 
 const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
@@ -120,11 +121,19 @@ export async function clearAuthBrowserSession(): Promise<void> {
 }
 
 async function runBrowser(args: string[]): Promise<void> {
-  // The sign-in window is a small Swift app, so it only exists on macOS.
+  // The Swift helper only exists on macOS; everywhere else Edge (or Chrome)
+  // does the same job over the DevTools protocol.
   if (process.platform !== "darwin") {
-    throw new Error(
-      "Signing in to the live directory only works on a Mac for now -- every other cedarstalk command works here.",
-    );
+    return runEdgeAuth({
+      profileDir: path.join(environment.supportPath, "sign-in-browser"),
+      jarFile: JAR_FILE,
+      cookieFile: args[0]?.startsWith("--") ? undefined : args[0],
+      signInUrl: "https://selfservice.cedarville.edu/cedarinfo/directory",
+      targetHost: "selfservice.cedarville.edu",
+      authCookies: [".ASPXAUTH", "studentselfservice_live"],
+      silent: args.includes("--silent"),
+      logout: args.includes("--logout"),
+    });
   }
   const binaryPath = await ensureBinary();
   const appBundle = await ensureAppBundle(binaryPath);
