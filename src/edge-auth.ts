@@ -1,6 +1,7 @@
-import { spawn } from "child_process";
+import { execFileSync, spawn } from "child_process";
 import { existsSync } from "fs";
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
+import * as os from "os";
 import * as path from "path";
 
 /**
@@ -35,25 +36,55 @@ const SILENT_TIMEOUT_MS = 25_000;
 const SILENT_IDP_GRACE_MS = 6_000;
 const VISIBLE_TIMEOUT_MS = 10 * 60_000;
 
-export function findChromium(): string | undefined {
+/** Where Windows records an app's install location -- works even when env vars don't. */
+function registryAppPath(exe: string): string[] {
+  const reg = `${process.env.SystemRoot ?? process.env.SYSTEMROOT ?? "C:\\Windows"}\\System32\\reg.exe`;
+  const found: string[] = [];
+  for (const hive of ["HKLM", "HKCU"]) {
+    try {
+      const out = execFileSync(reg, ["query", `${hive}\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\${exe}`, "/ve"], {
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+        windowsHide: true,
+      });
+      const match = out.match(/REG_SZ\s+(.+\.exe)/i);
+      if (match) found.push(match[1].trim().replace(/^"|"$/g, ""));
+    } catch {
+      // not registered in this hive
+    }
+  }
+  return found;
+}
+
+/** Every place Edge or Chrome might be, most likely first. Raycast can run extensions with a trimmed environment, so none of this relies on env vars alone. */
+export function chromiumCandidates(): string[] {
+  if (process.platform === "darwin") {
+    return [
+      "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    ];
+  }
+  if (process.platform !== "win32") return ["/usr/bin/microsoft-edge", "/usr/bin/google-chrome", "/usr/bin/chromium"];
+
   const env = process.env;
-  const candidates =
-    process.platform === "win32"
-      ? [
-          `${env["ProgramFiles(x86)"]}\\Microsoft\\Edge\\Application\\msedge.exe`,
-          `${env.ProgramFiles}\\Microsoft\\Edge\\Application\\msedge.exe`,
-          `${env.LOCALAPPDATA}\\Microsoft\\Edge\\Application\\msedge.exe`,
-          `${env.ProgramFiles}\\Google\\Chrome\\Application\\chrome.exe`,
-          `${env["ProgramFiles(x86)"]}\\Google\\Chrome\\Application\\chrome.exe`,
-          `${env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
-        ]
-      : process.platform === "darwin"
-        ? [
-            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-          ]
-        : ["/usr/bin/microsoft-edge", "/usr/bin/google-chrome", "/usr/bin/chromium"];
-  return candidates.find((p) => p && !p.startsWith("undefined") && existsSync(p));
+  const drive = env.SystemDrive ?? "C:";
+  const local = env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local");
+  const programDirs = [env["ProgramFiles(x86)"], env.ProgramFiles, env.ProgramW6432, `${drive}\\Program Files (x86)`, `${drive}\\Program Files`];
+  const edge = "Microsoft\\Edge\\Application\\msedge.exe";
+  const chrome = "Google\\Chrome\\Application\\chrome.exe";
+  const list = [
+    ...programDirs.map((d) => d && `${d}\\${edge}`),
+    `${local}\\${edge}`,
+    ...registryAppPath("msedge.exe"),
+    ...programDirs.map((d) => d && `${d}\\${chrome}`),
+    `${local}\\${chrome}`,
+    ...registryAppPath("chrome.exe"),
+  ];
+  return [...new Set(list.filter((p): p is string => Boolean(p)))];
+}
+
+export function findChromium(): string | undefined {
+  return chromiumCandidates().find((p) => existsSync(p));
 }
 
 type Json = Record<string, unknown>;
@@ -167,7 +198,11 @@ export async function runEdgeAuth(opts: EdgeAuthOptions): Promise<void> {
   }
 
   const browser = opts.browserPath ?? findChromium();
-  if (!browser) throw new Error("Signing in needs Microsoft Edge or Google Chrome, and neither was found.");
+  if (!browser) {
+    throw new Error(
+      `Signing in needs Microsoft Edge or Google Chrome, and neither was found. Looked in: ${chromiumCandidates().join(" ; ")}`,
+    );
+  }
 
   await mkdir(opts.profileDir, { recursive: true });
   await rm(path.join(opts.profileDir, "DevToolsActivePort"), { force: true }).catch(() => {});
